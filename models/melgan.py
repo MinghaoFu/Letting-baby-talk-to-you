@@ -9,6 +9,7 @@ class MelGanClassify(nn.Module):
         
     def forward(self, mel):
         audio = self.melgan.inference(mel)
+        return audio
         
     def pad1D(self, x, dim):
-        x.shape
+        pass

@@ -1,6 +1,9 @@
 import os
 import torch
 import torch.nn as nn
+import torchaudio
+import torchaudio.functional as F
+import torchaudio.transforms as T
 import re
 import librosa
 import pickle
@@ -16,10 +19,13 @@ class SegmentedAudio(Dataset):
     def __init__(self, data):
         self.data = data
         self.len = data['audio'].shape[0]
-        self.n_frames = data['audio'].shape[1]
-        self.n_mfcc_coeffs = data['audio'].shape[2]
-        self.n_flatten_feats = self.n_frames * self.n_mfcc_coeffs
-        
+        if len(data['audio'].shape) == 3:
+            self.n_flatten_feats = data['audio'].shape[1] * data['audio'].shape[2]
+        elif len(data['audio'].shape) == 2:
+            self.n_flatten_feats = data['audio'].shape[-1]
+        else:
+            raise ValueError('Feature shape {} is not available.'.format(data['audio'].shape))
+            
     def __len__(self):
         return self.len
 
@@ -42,11 +48,16 @@ class BabyChillantoDataset:
         
         if self.seg_len == 1:
             train_data, val_data = self.load_one_second_audio(train_ids, val_ids, n_mfcc_coeffs)
+        elif self.seg_len == 0:
+            # 4 feature
+            train_data, val_data = self.load_full_audio(train_ids, val_ids, n_mfcc_coeffs)
         else:
-            if shift != seg_len:
-                train_data, val_data = self.load_n_seconds_audio_shift(self.seg_len, self.shift, train_ids, val_ids, n_mfcc_coeffs)
-            else:
-                train_data, val_data = self.load_n_seconds_audio(self.seg_len, train_ids, val_ids, n_mfcc_coeffs)
+            train_data, val_data = self.load_n_seconds_audio_shift(self.seg_len, self.shift, train_ids, val_ids, n_mfcc_coeffs)
+                
+        if torch.cuda.is_available():
+            for data in [train_data, val_data]:
+                for k in data.keys():
+                    data[k] = data[k].cuda()
         
         all_data = {'audio': [], 'label': [], 'id': []}
         all_data['audio'] = torch.cat([train_data['audio'], val_data['audio']], axis=0)
@@ -92,7 +103,6 @@ class BabyChillantoDataset:
         
         return id2audios, n_baby, baby_ids
         
-    
     def generate_train_val_ids(self, individual_ids, n_baby, val_rate, split_type, save_path, load_path):
     
         if load_path is not None:
@@ -131,7 +141,76 @@ class BabyChillantoDataset:
         
         return train_ids, val_ids
 
+    def load_full_audio(self, train_ids, val_ids, n_mfcc_coeffs, prefix='Full_'):
+        train_data = {'audio': [], 'label': [], 'id': []}
+        val_data = {'audio': [], 'label': [], 'id': []}
+        full_audio_dirs = [self.data_dir + prefix + label for label in self.labels]
+        print('--- Loading full audios')
+        save_data=[]
+        for i, dir in enumerate(full_audio_dirs):
+            for file in os.listdir(dir):
+                if file.lower().endswith(".wav"):
+                    waveform, sample_rate = torchaudio.load(os.path.join(dir, file))
+                    
+                    sound_velocity = 343
+                    wavelength = torch.tensor(sound_velocity / sample_rate).cuda()
+                    
+                    n_fft = 1024
+                    win_length = None
+                    hop_length = 512
+                    n_mels = 256
+                    n_mfcc = 256
+                    spectrogram = T.Spectrogram(
+                        n_fft=n_fft,
+                        win_length=win_length,
+                        hop_length=hop_length,
+                        center=True,
+                        pad_mode="reflect",
+                        power=2.0,
+                    )
+                    spec = spectrogram(waveform)
+                    
+                    mfcc_transform = T.MFCC(
+                        sample_rate=sample_rate,
+                        n_mfcc=n_mfcc,
+                        melkwargs={
+                            "n_fft": n_fft,
+                            "n_mels": n_mels,
+                            "hop_length": hop_length,
+                            "mel_scale": "htk",
+                        },
+                    )
+                    mfcc = mfcc_transform(waveform).cuda()
+                    pitch = F.detect_pitch_frequency(waveform, sample_rate).cuda()
+                    
+                    feature = torch.stack([mfcc.mean(), mfcc.var(), pitch.mean(), pitch.var(), wavelength], dim=0)
+                    
+                    id = int(re.findall(r'\d+', file)[0])
+                    
+                    feature_label_id = [mfcc.mean().cpu(), mfcc.var().cpu(), pitch.mean().cpu(), pitch.var().cpu(), wavelength.cpu(), i, id]
+                    
+                    save_data.append(feature_label_id)
+                    
+                    if id in train_ids:
+                        train_data['audio'].append(feature)
+                        train_data['label'].append(i)
+                        train_data['id'].append(id)
+                    elif id in val_ids:
+                        val_data['audio'].append(feature)
+                        val_data['label'].append(i)
+                        val_data['id'].append(id)
+                    else:
+                        print('Data {}/{} is not included.'.format(dir, file))
 
+            
+        for data in [train_data, val_data]:
+            data['audio'] =  torch.stack(data['audio'], dim=0)
+            data['label'] = torch.tensor(data['label'])
+            data['id'] = torch.tensor(data['id'])
+            
+        np.savetxt("./data.csv", np.array(save_data), delimiter=",")
+        return train_data, val_data
+        
     def load_one_second_audio(self, train_ids, val_ids, n_mfcc_coeffs, prefix='1s_'):
         data_idx = 0 
         train_data = {'audio': [], 'label': [], 'id': []}
@@ -156,7 +235,7 @@ class BabyChillantoDataset:
                     #intensity = librosa.feature.rms(y=y).flatten()
                     feature = np.concatenate((mfcc, pitch), axis=0)
                     
-                    _id = int(file[2:4])
+                    _id = re.findall(r'\d+', file)[0]
                     if _id in train_ids:
                         train_data['audio'].append(feature)
                         train_data['label'].append(i)

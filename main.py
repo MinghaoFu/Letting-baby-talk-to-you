@@ -4,27 +4,27 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
+import loss
+
 from tqdm import tqdm
 from torch.nn import Transformer
 from torch.utils.data import Dataset, DataLoader, random_split
 from sklearn.manifold import TSNE
+from importlib import import_module
 
 from data.BabyChillanto import BabyChillantoDataset
 from data.DataCleaner import find_mistakes
-from models.simple_model import MLP
 
+    
 def train(args, model, dataset):
-    #model = TransformerModel(dim, n_dim, len(labels))
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    criterion = loss.Loss(args)
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
 
     train_loader = DataLoader(dataset.train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(dataset.val_dataset, batch_size=args.batch_size, shuffle=False)
 
     best_model = None
     best_performance = float('-inf') 
-    best_epoch = -1
-    # Train the model
     num_epochs = 20
     for epoch in range(num_epochs):
         running_loss = 0.0
@@ -91,19 +91,38 @@ if __name__ == '__main__':
     parser.add_argument('--n_dim', type=int, default=128, help='Transformer dimension')
     parser.add_argument('--save_path', type=str, default=None, help='Path to save output')
     parser.add_argument('--load_path', type=str, default=None, help='Path to load input')
+    parser.add_argument('--seed', type=int, default=42, help='Random seed')
+    parser.add_argument('--loss', type=str, default='1*cross_entropy', help='Loss function combination')
+    parser.add_argument('--temperature', type=float, default=0.07, help='Temperature for contrastive loss function')
+    parser.add_argument('--model', type=str, default='mlp', help='Model name')
 
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size')
-
+    
     # Parse the arguments
     args = parser.parse_args()
+
+    torch.manual_seed(args.seed)
+    
     dataset = BabyChillantoDataset(args.data_dir, args.labels, args.seg_len, args.n_mfcc_coeffs, args.val_rate, \
         args.split_type, args.shift, args.save_path, args.load_path)
-    #find_mistakes(dataset.all_data['audio'], dataset.all_data['label'], dataset.all_data['id'])
-    model = MLP(dataset.train_dataset.n_flatten_feats, 2000, 64, len(args.labels))
+
+    module = getattr(import_module('models.' + args.model), args.model)
+    
+    if args.model == 'mlp':
+        model = module(dataset.train_dataset.n_flatten_feats, 2000, 64, len(args.labels))
+    elif args.model == 'mlp_attention':
+        model = module(dataset.train_dataset.n_flatten_feats, 2000, 64, len(args.labels))
+    else:
+        model = module(args)
+        
+    if torch.cuda.is_available():
+        model = model.cuda()
+    
     if args.load_checkpoint:
         model.load_state_dict(torch.load(args.checkpoint_path))
-    else:
-        train(args, model, dataset)
+        
+    
+    train(args, model, dataset)
     
     
     
