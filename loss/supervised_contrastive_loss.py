@@ -32,7 +32,7 @@ class supervised_contrastive_loss(nn.Module):
         cardinality_per_samples = torch.sum(mask_combined, dim=1)
 
         log_prob = -torch.log(exp_dot_tempered / (torch.sum(exp_dot_tempered * mask_anchor_out, dim=1, keepdim=True)))
-        supervised_contrastive_loss_per_sample = torch.sum(log_prob * mask_combined, dim=1) / (cardinality_per_samples) # + 1e-5
+        supervised_contrastive_loss_per_sample = torch.sum(log_prob * mask_combined, dim=1) / (cardinality_per_samples + 1e-5)
         supervised_contrastive_loss = torch.mean(supervised_contrastive_loss_per_sample)
 
         return supervised_contrastive_loss
