@@ -231,19 +231,19 @@ class BabyChillantoDataset:
                     
                     mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=n_mfcc_coeffs).T
                     #n_frames = mfcc.shape[0]
-                    pitch = librosa.yin(y, fmin=75, fmax=600)
+                    pitch = np.expand_dims(librosa.yin(y, fmin=75, fmax=600), axis=1)
                     #intensity = librosa.feature.rms(y=y).flatten()
-                    feature = np.concatenate((mfcc, pitch), axis=0)
+                    feature = np.concatenate((mfcc, pitch), axis=1)
                     
-                    _id = re.findall(r'\d+', file)[0]
-                    if _id in train_ids:
+                    id = int(file[2:4])
+                    if id in train_ids:
                         train_data['audio'].append(feature)
                         train_data['label'].append(i)
-                        train_data['id'].append(_id)
-                    elif _id in val_ids:
+                        train_data['id'].append(id)
+                    elif id in val_ids:
                         val_data['audio'].append(feature)
                         val_data['label'].append(i)
-                        val_data['id'].append(_id)
+                        val_data['id'].append(id)
                     else:
                         print('Data {}/{} is not included.'.format(dir, file))
                     
