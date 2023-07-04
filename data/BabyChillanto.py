@@ -36,23 +36,23 @@ class SegmentedAudio(Dataset):
         return self.data['audio'].shape
 
 
-class BabyChillantoDataset:
-    def __init__(self, data_dir, labels, seg_len, n_mfcc_coeffs, val_rate, split_type, shift, save_path=None, load_path=None):
-        self.data_dir = data_dir
-        self.labels = labels
-        self.seg_len = seg_len
-        self.shift = shift
-        self.n_mfcc_coeffs = n_mfcc_coeffs
+class BabyChillanto:
+    def __init__(self, args):
+        self.data_dir = args.data_dir
+        self.labels = args.labels
+        self.seg_len = args.seg_len
+        self.shift = args.shift
+        self.n_mfcc_coeffs = args.n_mfcc_coeffs
         self.id2audios, self.n_baby, self.baby_ids = self.get_dataset_ids()
-        train_ids, val_ids = self.generate_train_val_ids(self.baby_ids, self.n_baby, val_rate, split_type, load_path, save_path)
+        args.train_ids, args.val_ids = self.generate_train_val_ids(self.baby_ids, self.n_baby, args.val_rate, args.split_type, args.load_path, args.save_path)
         
         if self.seg_len == 1:
-            train_data, val_data = self.load_one_second_audio(train_ids, val_ids, n_mfcc_coeffs)
+            train_data, val_data = self.load_one_second_audio(args.train_ids, args.val_ids, args.n_mfcc_coeffs)
         elif self.seg_len == 0:
             # 4 feature
-            train_data, val_data = self.load_full_audio(train_ids, val_ids, n_mfcc_coeffs)
+            train_data, val_data = self.load_full_audio(args.train_ids, args.val_ids, args.n_mfcc_coeffs)
         else:
-            train_data, val_data = self.load_n_seconds_audio_shift(self.seg_len, self.shift, train_ids, val_ids, n_mfcc_coeffs)
+            train_data, val_data = self.load_n_seconds_audio_shift(self.seg_len, self.shift, args.train_ids, args.val_ids, args.n_mfcc_coeffs)
                 
         if torch.cuda.is_available():
             for data in [train_data, val_data]:
@@ -76,7 +76,7 @@ class BabyChillantoDataset:
             len(self.val_dataset), len(self.all_dataset)))
         
     def get_dataset_ids(self, prefix='Full_'):
-        full_audio_dirs = [self.data_dir + prefix + label for label in self.labels]
+        full_audio_dirs = [os.path.join(self.data_dir, prefix + label) for label in self.labels]
         
         id2audios = {}
         n_baby = 0
@@ -87,14 +87,14 @@ class BabyChillantoDataset:
             for file in os.listdir(dir):
                 if file.lower().endswith(".wav"):
                     # record individual ids
-                    _id = int(re.findall(r'\d+', file)[0])
+                    id = int(re.findall(r'\d+', file)[0])
                     
-                    if _id in id2audios:
-                        id2audios[_id].append(file)
+                    if id in id2audios:
+                        id2audios[id].append(file)
                     else:
-                        id2audios[_id] = [file]
+                        id2audios[id] = [file]
                         n_baby += 1
-                        class_ids.append(_id)
+                        class_ids.append(id)
 
             baby_ids.append(class_ids)
             
@@ -268,7 +268,7 @@ class BabyChillantoDataset:
                     y, sr = librosa.load(os.path.join(dir, file))
                     seg_samples = int(seg_len * sr)
                     total_segs = len(y) // seg_samples
-                    _id = int(re.findall(r'\d+', file)[0])
+                    id = int(re.findall(r'\d+', file)[0])
                     for seg_index in range(total_segs):
                         start = seg_index * seg_samples
                         end = (seg_index + 1) * seg_samples
@@ -280,14 +280,14 @@ class BabyChillantoDataset:
                         pitch = librosa.yin(segment, fmin=75, fmax=600)
                         #intensity = librosa.feature.rms(y=y).flatten()
                         feature = np.concatenate((mfcc, np.expand_dims(pitch, axis=1)), axis=1)
-                        if _id in train_ids:
+                        if id in train_ids:
                             train_data['audio'].append(feature)
                             train_data['label'].append(i)
-                            train_data['id'].append(_id)
-                        elif _id in val_ids:
+                            train_data['id'].append(id)
+                        elif id in val_ids:
                             val_data['audio'].append(feature)
                             val_data['label'].append(i)
-                            val_data['id'].append(_id)
+                            val_data['id'].append(id)
                         else:
                             print('Data {}/{} is not included.'.format(dir, file))
 
@@ -301,7 +301,7 @@ class BabyChillantoDataset:
     def load_n_seconds_audio_shift(self, seg_len, shift, train_ids, val_ids, n_mfcc_coeffs, prefix='Full_'):
         train_data = {'audio': [], 'label': [], 'id': []}
         val_data = {'audio': [], 'label': [], 'id': []}
-        full_audio_dirs = [self.data_dir + prefix + label for label in self.labels]
+        full_audio_dirs = [os.path.join(self.data_dir, prefix + label) for label in self.labels]
         print('--- Loading and segmenting {} second audios'.format(seg_len))
         for i, dir in enumerate(full_audio_dirs):
             for file in os.listdir(dir):
@@ -310,7 +310,7 @@ class BabyChillantoDataset:
                     seg_samples = int(seg_len * sr)
                     shift_samples = int(shift * sr)
                     total_segs = (len(y) - seg_samples) // shift_samples 
-                    _id = int(re.findall(r'\d+', file)[0])
+                    id = int(re.findall(r'\d+', file)[0])
                     for seg_index in range(total_segs):
                         start = seg_index * shift_samples
                         end = start + seg_samples
@@ -322,14 +322,14 @@ class BabyChillantoDataset:
                         pitch = librosa.yin(segment, fmin=75, fmax=600)
                         #intensity = librosa.feature.rms(y=y).flatten()
                         feature = np.concatenate((mfcc, np.expand_dims(pitch, axis=1)), axis=1)
-                        if _id in train_ids:
+                        if id in train_ids:
                             train_data['audio'].append(feature)
                             train_data['label'].append(i)
-                            train_data['id'].append(_id)
-                        elif _id in val_ids:
+                            train_data['id'].append(id)
+                        elif id in val_ids:
                             val_data['audio'].append(feature)
                             val_data['label'].append(i)
-                            val_data['id'].append(_id)
+                            val_data['id'].append(id)
                         else:
                             print('Data {}/{} is not included.'.format(dir, file))
 

@@ -11,6 +11,7 @@ class supervised_contrastive_loss(nn.Module):
         """
         super(supervised_contrastive_loss, self).__init__()
         self.temperature = args.temperature
+        print(self.temperature)
 
     def forward(self, projections, targets):
         """
