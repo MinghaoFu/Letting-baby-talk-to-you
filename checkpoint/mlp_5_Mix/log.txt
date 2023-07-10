@@ -1,118 +1,112 @@
-Namespace(age_embed_dim=512, batch_size=8, checkpoint_dir='./checkpoint/mlp_5_Mix', checkpoint_path=None, data='Mix', data_dir='./dataset/Mix', dropout=None, gender_embed_dim=512, labels=['pain', 'hungry', 'tired', 'asphyxia', 'deaf'], load_path=None, log_path=None, loss='1*cross_entropy_loss', lr=0.0001, model='mlp', n_dim=128, n_epochs=20, n_mfcc_coeffs=20, pattern='^\\d+', remove_ids=[], save_path=None, seeds=[5], seg_len=2, shift=1, split_type='class', temperature=0.07, timestamp='2023-07-03-10-43-32', val_rate=0.2)
-Epoch [1/20] train accuracy: 170 / 226 = 0.34513274336283184
-train errors: [[  0   2   5]
- [  1   2  12]
- [  2   2   5]
- [  3   2   6]
- [  7   2   6]
- [ 11   2   6]
- [ 12   2   6]
- [ 15   2   6]
- [ 16   2   5]
- [ 17   2   6]
- [ 25   3  23]
- [ 26   3   4]
- [ 27   3   3]
- [ 28   3   4]
- [ 41   1   6]
- [ 45   1   2]
- [ 49   1   1]
- [ 50   1   1]
- [ 56   1   1]
- [ 65   1   1]
- [ 67   1   1]
- [ 78   1   2]
- [ 84   1   1]
- [ 89   1   1]
- [106   1   1]
- [109   1   1]
- [114   1   1]
- [116   1   1]
- [117   1   1]
- [122   1   1]
- [129   1   1]
- [139   1   1]
- [165   1   1]
- [169   1   1]
- [176   1   1]
- [199   1   2]
- [210   1   2]
- [217   1   1]
- [221   1   1]
- [240   1   1]
- [246   1   2]
- [248   4   7]
- [249   4  16]
- [250   4   4]
- [253   4  15]
- [289   0   3]
- [293   0   2]
- [294   0   1]
- [296   0   7]
- [300   0   2]
- [301   0   4]
+Namespace(data='Mix', checkpoint_path=None, log_path=None, pattern='^\\d+', split_type='class', n_mfcc_coeffs=20, seg_len=2, shift=1, val_rate=0.2, n_dim=128, save_path=None, load_path=None, seeds=[5], loss='1*cross_entropy_loss', temperature=0.07, model='mlp', dropout=None, lr=0.0001, n_epochs=20, batch_size=8, gender_embed_dim=512, age_embed_dim=512, timestamp='2023-07-05-22-26-11', checkpoint_dir='./checkpoint/mlp_5_Mix', data_dir='./dataset/Mix', labels=['pain', 'hungry', 'asphyxia', 'deaf'], remove_ids=[253])
+Seed = 5
+Epoch [1/20] train accuracy: 45 / 126 = 0.3571428571428571
+train errors: [[  0   1   1]
+ [ 20   1   1]
+ [ 22   1   1]
+ [ 23   2   5]
+ [ 24   2   4]
+ [ 25   2   6]
+ [ 26   2   1]
+ [ 88   1   1]
+ [115   1   1]
+ [120   1   1]
+ [137   1   1]
+ [143   1   1]
+ [168   1   1]
+ [188   1   1]
+ [207   1   1]
+ [211   1   1]
+ [221   1   2]
+ [233   1   1]
+ [241   1   1]
+ [249   3  23]
+ [250   3  10]
+ [252   3   3]
+ [253   3  22]
+ [288   0   3]
+ [289   0   1]
+ [290   0   3]
+ [292   0   1]
+ [293   0   1]
+ [294   0   2]
+ [297   0   1]
+ [298   0   2]
+ [301   0   3]
+ [302   0   1]
+ [306   0   9]
+ [308   0   9]]
+
+
+Seed = 5
+Epoch [1/20] val accuracy: 68 / 94 = 0.7234042553191489
+val errors: [[248   3  75]
+ [291   0   2]
+ [296   0   4]
  [305   0   3]
- [306   0   7]
- [307   0   8]
- [308   0   5]
- [310   0   8]]
-Epoch [1/20] val accuracy: 46 / 53 = 0.6037735849056604
-val errors: [[  8   2  15]
- [ 13   2   6]
- [ 24   3   9]
- [ 90   1   1]
- [147   1   1]
- [206   1   1]
- [251   4  20]]
-train accuracy: 136 / 150 = 0.053333333333333344
-train errors: [[  0   2  11]
- [  1   2  28]
- [  2   2  11]
- [  3   2  14]
- [  7   1   1]
- [  7   2  11]
- [ 11   2  15]
- [ 12   2  11]
- [ 15   2  16]
- [ 16   2  11]
- [ 17   2  13]
- [ 25   3   5]
- [ 78   1   1]
- [248   4   2]]
-val accuracy: 2006 / 2026 = 0.6994076999012833
-val errors: [[   8    2  285]
- [  13    2  114]
- [  24    3  201]
- [  29    1    6]
- [  57    1   19]
- [  70    1   45]
- [  90    1   18]
- [ 102    1    7]
- [ 112    1    1]
- [ 125    1   23]
- [ 140    1    1]
- [ 141    1    1]
- [ 147    1   24]
- [ 188    1    1]
- [ 189    1   13]
- [ 193    1    2]
- [ 204    1    3]
- [ 206    1   18]
- [ 229    1   32]
- [ 251    4 1212]]
-test accuracy: 52 / 67 = 0.6865671641791045
-test errors: [[  4   2   5]
- [  5   2   6]
- [  6   1   1]
- [  6   2  11]
- [  9   1   6]
- [  9   2  15]
- [ 10   2   5]
- [ 14   2   6]
- [ 23   3   2]
- [ 48   1   4]
- [ 80   1   2]
- [ 81   1   1]
- [ 98   1   1]
- [146   1   1]
- [159   1   1]]
+ [309   0  10]]
+
+
+Seed = 5
+Epoch [2/20] train accuracy: 0 / 6 = 0.0
+train errors: [[250   3   1]
+ [306   0   3]
+ [308   0   2]]
+
+
+Seed = 5
+Epoch [2/20] val accuracy: 20 / 34 = 0.5882352941176471
+val errors: [[248   3  31]
+ [305   0   1]
+ [309   0   2]]
+
+
+Seed = 5
+Epoch [3/20] val accuracy: 19 / 32 = 0.59375
+val errors: [[248   3  26]
+ [305   0   3]
+ [309   0   3]]
+
+
+Seed = 5
+Epoch [4/20] val accuracy: 17 / 30 = 0.5666666666666667
+val errors: [[248   3  23]
+ [305   0   3]
+ [309   0   4]]
+
+
+Seed = 5
+Epoch [5/20] val accuracy: 16 / 29 = 0.5517241379310345
+val errors: [[248   3  22]
+ [305   0   3]
+ [309   0   4]]
+
+
+Seed = 5
+Epoch [6/20] val accuracy: 16 / 27 = 0.5925925925925926
+val errors: [[248   3  20]
+ [305   0   3]
+ [309   0   4]]
+
+
+Seed = 5
+Epoch [12/20] val accuracy: 94 / 166 = 0.5662650602409638
+val errors: [[248   3 127]
+ [305   0  18]
+ [309   0  21]]
+
+
+Seed = 5
+Epoch [20/20] val accuracy: 121 / 210 = 0.5761904761904761
+val errors: [[248   3 161]
+ [305   0  24]
+ [309   0  25]]
+
+
+test accuracy: 63 / 84 = 0.75
+test errors: [[251   3  57]
+ [295   0   1]
+ [304   0   6]
+ [310   0  20]]
+
+

@@ -90,7 +90,7 @@ class Mix:
                     infos = file.split('-')
                     id = int(infos[0])
                     if id in remove_ids:
-                        print('--- ID {} has been removed.'.format(id))
+                        pass
                     elif id in id2audios:
                         id2audios[id].append(file)
                     else:
@@ -188,7 +188,7 @@ class Mix:
                         pitch = librosa.yin(segment, fmin=75, fmax=600)
                         #intensity = librosa.feature.rms(y=y).flatten()
                         feature = np.concatenate((mfcc, np.expand_dims(pitch, axis=1)), axis=1)
-                        if id in train_ids:
+                        if id in train_ids or id in self.remove_ids:
                             train_data['audio'].append(feature)
                             train_data['label'].append(i)
                             train_data['id'].append(id)
@@ -203,8 +203,6 @@ class Mix:
                             test_data['label'].append(i)
                             test_data['id'].append(id)
                             test_data['idx'].append(idx)
-                        elif id in self.remove_ids:
-                            pass
                         else:
                             print('Data {}/{} is not included.'.format(dir, file))
                     

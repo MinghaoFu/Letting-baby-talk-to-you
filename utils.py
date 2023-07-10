@@ -17,7 +17,7 @@ class Log:
         
     def save_info(self, outputs, labels, ids, indices, type):
         
-        _, inds= outputs.topk(k=5, dim=1)
+        _, inds= outputs.topk(k=len(self.args.labels), dim=1)
         pred = inds[:, 0]
         cor_inds = torch.nonzero(torch.eq(pred, labels)).view(-1)
         err_inds = torch.nonzero(torch.ne(pred, labels)).view(-1)
@@ -82,8 +82,8 @@ def preprocess_args(args):
         args.n_gender_classes = 2
         args.n_age_classes = 5
     elif args.data == 'Mix':
-        args.labels = ['pain', 'hungry', 'tired', 'asphyxia', 'deaf']
-        args.remove_ids = []
+        args.labels = ['pain', 'hungry', 'asphyxia', 'deaf']
+        args.remove_ids = [253]
     else:
         raise ValueError('Unknow dataset {}'.format(args.data))
 
@@ -144,14 +144,17 @@ class AverageMeter(object):
         fmtstr = '{name} {val' + self.fmt + '} ({avg' + self.fmt + '})'
         return fmtstr.format(**self.__dict__)
 
-def rename_donateacry(data_dir, tgt_dir=None):
+def rename_donateacry(data_dir, tgt_dir=None, baby_id=-1):
+    '''
+        baby_id: -1 if rename from scratch. If adding new samples to existing dataset, set baby_id as the last id of the existing one.
+    '''
     if tgt_dir == None:
         tgt_dir = data_dir
     record2id = {}
-    baby_id = -1
     for dir in os.listdir(data_dir):
         cls_path = os.path.join(data_dir, dir)
-        os.makedirs(os.path.join(tgt_dir, dir))
+        if tgt_dir != data_dir:
+            os.makedirs(os.path.join(tgt_dir, dir))
         if os.path.isdir(cls_path):
             for file in os.listdir(cls_path):
                 if file.lower().endswith(".wav"):
@@ -184,6 +187,6 @@ def rename_donateacry(data_dir, tgt_dir=None):
                     print('Rename {} to {}.'.format(src_path, tgt_path))
                     
 if __name__ == '__main__':
-    rename_donateacry('/home/yu.yao/LBTU/dataset/DonateACry', '/home/yu.yao/LBTU/dataset/Mix')
+    rename_donateacry('/home/minghao.fu/workspace/Letting-baby-talk-to-you/dataset/rename', baby_id=310)
 
                         

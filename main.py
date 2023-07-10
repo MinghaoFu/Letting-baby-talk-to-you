@@ -14,7 +14,7 @@ from sklearn.manifold import TSNE
 from importlib import import_module
 
 from utils import fix_seed, preprocess_args, AverageMeter, accuracy, Log
-from train import train_babychillanto, train_donateacry
+from train import train_babychillanto
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Descriptions')
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     parser.add_argument('--seg_len', type=int, default=4, help='Segment length of audio')
     parser.add_argument('--shift', type=float, default=1, help='Shift length of each segment')
     parser.add_argument('--val_rate', type=float, default=0.2, help='Validation data ratio')
-    parser.add_argument('--n_dim', type=int, default=128, help='Transformer dimension')
+    parser.add_argument('--n_dim',type=int, default=128, help='Transformer dimension')
     parser.add_argument('--save_path', type=str, default=None, help='Path to save output')
     parser.add_argument('--load_path', type=str, default=None, help='Path to load input')
     parser.add_argument('--seeds', type=str, default='42', help='Random seeds (for multiple training)')
@@ -49,7 +49,8 @@ if __name__ == '__main__':
 
 preprocess_args(args)
 log = Log(args)
-accuracies = []
+val_accuracies = []
+test_accuracies = []
 for seed in args.seeds:
     fix_seed(seed)
     
@@ -71,7 +72,9 @@ for seed in args.seeds:
         model.load_state_dict(torch.load(args.checkpoint_path))
     
     trainer = getattr(import_module('train'), 'train_babychillanto')
-    best_model, best_performance = trainer(args, model, dataset, log, seed)
-    accuracies.append(best_performance)
+    best_model, best_val_performance, best_test_performance = trainer(args, model, dataset, log, seed)
+    val_accuracies.append(best_val_performance)
+    test_accuracies.append(best_test_performance)
     
-print('Accuracies: {}, mean: {}, var: {}'.format(accuracies, np.mean(accuracies), np.var(accuracies)))
+print('Val accuracies: {}, mean: {}, var: {}'.format(val_accuracies, np.mean(val_accuracies), np.var(val_accuracies)))
+print('Test accuracies: {}, mean: {}, var: {}'.format(test_accuracies, np.mean(test_accuracies), np.var(test_accuracies)))
