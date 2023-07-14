@@ -30,8 +30,8 @@ def train_babychillanto(args, model, dataset, log, seed):
         train_loss = AverageMeter('Acc@1', ':6.2f')
         n_top2 = AverageMeter('Acc@1', ':6.2f')
         
-        cls_train_top1= [AverageMeter('Acc@1', ':6.2f')] * len(args.labels)
-        cls_train_top2= [AverageMeter('Acc@1', ':6.2f')] * len(args.labels)
+        cls_train_top1= [AverageMeter('Acc@1', ':6.2f') for _ in range(len(args.labels))]
+        cls_train_top2= [AverageMeter('Acc@1', ':6.2f') for _ in range(len(args.labels))]
         
         for batch_data in train_loader:
             b_audios, b_labels, b_ids, b_indices = batch_data

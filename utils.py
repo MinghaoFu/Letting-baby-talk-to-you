@@ -86,7 +86,9 @@ def preprocess_args(args):
         args.remove_ids = [253]
     else:
         raise ValueError('Unknow dataset {}'.format(args.data))
-
+    if len(args.add_labels) != 0:
+        args.labels += [label for label in args.add_labels.split('+')]
+    
 def fix_seed(seed):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
@@ -170,7 +172,6 @@ def rename_donateacry(data_dir, tgt_dir=None, baby_id=-1):
                         gender = infos[-3]
                         record = '-'.join(infos[0:4] + [gender, age])
                         
-                    print(record)
                     if record in record2id:
                         record2id[record][1] += 1
                         assigned_id, idx = record2id[record]

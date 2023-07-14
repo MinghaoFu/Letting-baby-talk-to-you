@@ -10,8 +10,9 @@ class Transformer_model(nn.Module):
         self.classifier = nn.Linear(n_dim, n_classes)
         
     def forward(self, x):
+        if len(x.shape) > 2:
+            x = torch.flatten(x, start_dim=1, end_dim=len(x.shape) - 1)
         h = self.fc(x)
         y = self.transformer_encoder(h)
-        y = y.mean(dim=1)
         out = self.classifier(y)
         return out

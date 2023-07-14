@@ -32,6 +32,8 @@ if __name__ == '__main__':
     parser.add_argument('--save_path', type=str, default=None, help='Path to save output')
     parser.add_argument('--load_path', type=str, default=None, help='Path to load input')
     parser.add_argument('--seeds', type=str, default='42', help='Random seeds (for multiple training)')
+    parser.add_argument('--reweight', action='store_true', help='Reweighting')
+    parser.add_argument('--add_labels', type=str, default='', help='Added labels')
     
     parser.add_argument('--loss', type=str, default='1*cross_entropy_loss+1*supervised_contrastive_loss', help='Loss function combination')
     parser.add_argument('--temperature', type=float, default=0.07, help='Temperature for contrastive loss function')
@@ -40,6 +42,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate')
     parser.add_argument('--n_epochs', type=int, default=20, help='Number of epochs')
     parser.add_argument('--batch_size', type=int, default=8, help='Batch size')
+    
     
     parser.add_argument('--gender_embed_dim', type=int, default=512, help='Embedding dim of gender') 
     parser.add_argument('--age_embed_dim', type=int, default=512, help='Embedding dim of age')
@@ -56,12 +59,18 @@ for seed in args.seeds:
     
     data_module = getattr(import_module('data.' + args.data), args.data)
     dataset = data_module(args)
-
+    if args.reweight:
+        args.cls_weights = 1.0 / torch.Tensor(dataset.cls_num).cuda().float()
+    
     module = getattr(import_module('models.' + args.model), args.model)
+    args.in_feats = dataset.train_dataset.n_flatten_feats
+    
     if args.model == 'mlp':
-        model = module(dataset.train_dataset.n_flatten_feats, 2000, 64, len(args.labels), args.dropout)
+        model = module(args.in_feats, 2000, 64, len(args.labels), args.dropout)
     elif args.model == 'mlp_attention':
-        model = module(dataset.train_dataset.n_flatten_feats, 64, 64, len(args.labels))
+        model = module(args.in_feats, 64, 64, len(args.labels))
+    elif args.model == 'Transformer_model':
+        model = module(args.in_feats, args.n_dim, len(args.labels))
     else:
         model = module(args)
         

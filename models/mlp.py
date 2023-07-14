@@ -5,6 +5,7 @@ import torch.nn.functional as F
 class mlp(nn.Module):
     def __init__(self, in_feats, mid_feats, out_feats, n_classes, dropout=0.5):
         super(mlp, self).__init__()
+    
         self.fc1 = nn.Linear(in_feats, mid_feats)
         self.bn1 = nn.BatchNorm1d(mid_feats)
         self.fc2 = nn.Linear(mid_feats, out_feats)

@@ -45,6 +45,8 @@ class Mix:
         self.n_mfcc_coeffs = args.n_mfcc_coeffs
         self.remove_ids = args.remove_ids
         self.audio_dirs = [os.path.join(self.data_dir, label) for label in self.labels]
+        self.cls_num = [0] * len(self.labels)
+        
         self.id2audios, self.n_baby, self.baby_ids = self.get_dataset_ids(args.remove_ids)
         args.train_ids, args.val_ids, args.test_ids = self.generate_train_val_test_ids(self.baby_ids, self.n_baby, args.split_type, args.load_path, args.save_path)
         if self.seg_len == 1:
@@ -205,7 +207,8 @@ class Mix:
                             test_data['idx'].append(idx)
                         else:
                             print('Data {}/{} is not included.'.format(dir, file))
-                    
+
+                        self.cls_num[i] += 1
 
         for data in [train_data, val_data, test_data]:
             data['audio'] = torch.from_numpy(center_data(np.stack(data['audio']))).float()
