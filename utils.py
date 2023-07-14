@@ -83,7 +83,7 @@ def preprocess_args(args):
         args.n_age_classes = 5
     elif args.data == 'Mix':
         args.labels = ['pain', 'hungry', 'asphyxia', 'deaf']
-        args.remove_ids = [253]
+        args.remove_ids = [253, 251]
     else:
         raise ValueError('Unknow dataset {}'.format(args.data))
     if len(args.add_labels) != 0:
