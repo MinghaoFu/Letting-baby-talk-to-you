@@ -27,17 +27,6 @@ class Log:
             err_ids = ids[err_inds]
             err_labels = labels[err_inds]
             self.err_logs[type].append(torch.cat([err_ids.unsqueeze(1), err_labels.unsqueeze(1)], dim=1))
-            
-            # out_types = [[args.labels[value] for value in row] for row in indices[mistake_indices].tolist()]
-            # y_type = [args.labels[value] for value in vb_labels[mistake_indices].tolist()]
-            # print(out_types, y_type)
-
-            # wrong_ids = vb_ids[mistake_indices].tolist()
-            # for id in wrong_ids:
-            #     id2wrongCount[id] += 1
-            # wrong_cls = [args.labels[i] for i in vb_labels[mistake_indices].tolist()]
-            # for cls in wrong_cls:
-            #     cls2wrongCount[cls] += 1
     
     def save_log(self, epoch, seed=None, test=False):
         for k in self.err_logs.keys():
@@ -98,7 +87,8 @@ def fix_seed(seed):
     torch.cuda.manual_seed_all(seed) # if you are using multi-GPU.
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
-
+    
+    
 def accuracy(output, target, topk=(1,)):
     """Computes the accuracy over the k top predictions for the specified values of k"""
     with torch.no_grad():
@@ -114,6 +104,7 @@ def accuracy(output, target, topk=(1,)):
             correct_k = correct[:k].reshape(-1).float().sum(0, keepdim=True)
             res.append(correct_k.mul_(100.0 / batch_size))
     return res
+    
 
 def adjust_learning_rate(optimizer, epoch, base_lr, ajust_period=20):
     """Sets the learning rate to the initial LR decayed by 10 every 100 epochs"""

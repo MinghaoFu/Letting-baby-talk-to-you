@@ -4,6 +4,7 @@ import torch.nn as nn
 import torchaudio
 import torchaudio.functional as F
 import torchaudio.transforms as T
+import soundfile as sf
 import re
 import librosa
 import pickle
@@ -44,10 +45,17 @@ class Mix:
         self.shift = args.shift
         self.n_mfcc_coeffs = args.n_mfcc_coeffs
         self.remove_ids = args.remove_ids
+        self.seg_save_dir = args.seg_save_dir
+        if self.seg_save_dir is not None:
+            if os.path.exists(self.seg_save_dir):
+                raise ValueError('Directory of segmented audios exists!')
+            else:
+                for type in ['train', 'val', 'test']:
+                    os.makedirs(os.path.join(self.seg_save_dir, type))
         self.audio_dirs = [os.path.join(self.data_dir, label) for label in self.labels]
         self.cls_num = [0] * len(self.labels)
         
-        self.id2audios, self.n_baby, self.baby_ids = self.get_dataset_ids(args.remove_ids)
+        self.id2audios, self.n_baby, self.baby_ids = self.get_dataset_ids()
         args.train_ids, args.val_ids, args.test_ids = self.generate_train_val_test_ids(self.baby_ids, self.n_baby, args.split_type, args.load_path, args.save_path)
         if self.seg_len == 1:
             train_data, val_data = self.load_one_second_audio(args.train_ids, args.val_ids, args.n_mfcc_coeffs)
@@ -78,8 +86,9 @@ class Mix:
             
         print('--- Training samples: {}, validation samples: {}, validation samples: {}, total samples: {}'.format(len(self.train_dataset), \
             len(self.val_dataset), len(self.test_dataset), len(self.all_dataset)))
+        print('--- Class number: {}'.format({label: num for label, num in zip(args.labels, self.cls_num)}))
         
-    def get_dataset_ids(self, remove_ids=[]):
+    def get_dataset_ids(self):
         id2audios = {}
         n_baby = 0
         baby_ids = []
@@ -91,14 +100,13 @@ class Mix:
                     # record individual ids
                     infos = file.split('-')
                     id = int(infos[0])
-                    if id in remove_ids:
-                        pass
-                    elif id in id2audios:
-                        id2audios[id].append(file)
-                    else:
-                        id2audios[id] = [file]
-                        n_baby += 1
-                        class_ids.append(id)
+                    if id not in self.remove_ids:
+                        if id in id2audios:
+                            id2audios[id].append(file)
+                        else:
+                            id2audios[id] = [file]
+                            n_baby += 1
+                            class_ids.append(id)
 
             baby_ids.append(class_ids)
             
@@ -128,8 +136,6 @@ class Mix:
                     train_ids.extend(cls[:n_train])
                     val_ids.extend(cls[n_train:n_train + n_val])
                     test_ids.extend(cls[-n_test:])
-                    
-                #train_ids.extend(self.remove_ids)
                     
             elif split_type == 'baby':
                 
@@ -191,24 +197,30 @@ class Mix:
                         #intensity = librosa.feature.rms(y=y).flatten()
                         feature = np.concatenate((mfcc, np.expand_dims(pitch, axis=1)), axis=1)
                         if id in train_ids or id in self.remove_ids:
+                            type = 'train'
                             train_data['audio'].append(feature)
                             train_data['label'].append(i)
                             train_data['id'].append(id)
                             train_data['idx'].append(idx)
                         elif id in val_ids:
+                            type = 'val'
                             val_data['audio'].append(feature)
                             val_data['label'].append(i)
                             val_data['id'].append(id)
                             val_data['idx'].append(idx)
                         elif id in test_ids:
+                            type = 'test'
                             test_data['audio'].append(feature)
                             test_data['label'].append(i)
                             test_data['id'].append(id)
                             test_data['idx'].append(idx)
-                        else:
-                            print('Data {}/{} is not included.'.format(dir, file))
 
                         self.cls_num[i] += 1
+                        
+                        if self.seg_save_dir is not None:
+                            seg_save_path = os.path.join(self.seg_save_dir, type, '{}-{}-{}-{}-{}.wav'.format(id, idx, seg_index, gender, age))
+                            #librosa.output.write_wav(seg_save_path, segment, sr) libsora.output has been removed in 0.8.0
+                            sf.write(seg_save_path, segment, sr)
 
         for data in [train_data, val_data, test_data]:
             data['audio'] = torch.from_numpy(center_data(np.stack(data['audio']))).float()

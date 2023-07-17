@@ -32,6 +32,7 @@ if __name__ == '__main__':
     parser.add_argument('--save_path', type=str, default=None, help='Path to save output')
     parser.add_argument('--load_path', type=str, default=None, help='Path to load input')
     parser.add_argument('--seeds', type=str, default='42', help='Random seeds (for multiple training)')
+    parser.add_argument('--seg_save_dir', type=str, default=None, help='Saving segmented audio files')
     parser.add_argument('--reweight', action='store_true', help='Reweighting')
     parser.add_argument('--add_labels', type=str, default='', help='Added labels')
     
