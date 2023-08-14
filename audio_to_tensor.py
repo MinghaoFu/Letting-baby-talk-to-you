@@ -10,7 +10,8 @@ app = Flask(__name__)
 def read_audio_to_tensor(sample_method='auto_detect', 
                          seg_len=2, 
                          n_mfcc_coeffs=20, 
-                         device=None):
+                         device=None, # if GPUs
+                         ):
     if sample_method not in ['random', 'first', 'auto_detect']:
         raise ValueError("Sample method must be 'random', 'first', or 'auto_detect'")
     
@@ -36,7 +37,7 @@ def read_audio_to_tensor(sample_method='auto_detect',
             seg_len_size = seg_len * sr
             if seg_len_size > len(y):
                 seg = np.pad(y, (0, seg_len_size - len(y)), mode='constant')
-            segments = [y[i : i + seg_len_size] for i in range(0, len(y), seg_len_size)] # shift window is too slow
+            segments = [y[i : i + seg_len_size] for i in range(0, len(y), seg_len_size)] # shift window runs too slow
             if sample_method == 'random':
                 seg = random.choice(segments)
             elif sample_method == 'auto_detect':
