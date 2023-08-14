@@ -36,7 +36,7 @@ def read_audio_to_tensor(sample_method='auto_detect',
             y, sr = librosa.load(file)
             seg_len_size = seg_len * sr
             if seg_len_size > len(y):
-                seg = np.pad(y, (0, seg_len_size - len(y)), mode='constant')
+                y = np.pad(y, (0, seg_len_size - len(y)), mode='constant')
             segments = [y[i : i + seg_len_size] for i in range(0, len(y), seg_len_size)] # shift window runs too slow
             if sample_method == 'random':
                 seg = random.choice(segments)
