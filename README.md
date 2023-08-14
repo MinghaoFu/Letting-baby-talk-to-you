@@ -5,12 +5,9 @@
 
 Authors
 
-<!-- <p align="center">
-    <img src="imgs/network.png" alt="WFPN" width="90%">
-</p>
 <p align="center">
-Figure 1: Network architecture of the proposed Wide Feature Projection Network (WFPN). 
-</p> -->
+    <img src="assets/images/logo.png" alt="logo" width="90%">
+</p>
 
 </div>
 
@@ -39,6 +36,15 @@ Train, evaluate, and test:
 ```bash
 python main.py --seg_len 2 --loss 1*cross_entropy_loss+1*supervised_contrastive_loss --data Mix --seeds 1+2+3+4+5 --reweight --model resnet
 ```
+## App
+Try [App](https://github.com/MinghaoFu/Letting-baby-talk-to-you/) for free!
+
+<p align="center">
+    <img src="assets/images/record.png" alt="logo" width="90%">
+</p>
+<p align="center">
+    <img src="assets/images/output.png" alt="logo" width="90%">
+</p>
 
 ## Main Results
 
