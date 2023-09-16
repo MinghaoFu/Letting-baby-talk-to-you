@@ -2,8 +2,3 @@
 ./Archive/
 ./dataset/
 **/__pycache__/
-
-*.pth
-*.wav
-*.txt
-*.pdf
