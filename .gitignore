@@ -1,4 +1,7 @@
-checkpoint/
-Archive/
-dataset/
-__pycache__/
+./checkpoint/
+./Archive/
+./dataset/
+**/__pycache__/
+
+*.pth
+*.wav
