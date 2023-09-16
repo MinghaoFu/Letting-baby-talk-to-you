@@ -81,8 +81,6 @@ def train_babychillanto(args, model, dataset, log, seed):
                 
                 _, indices= voutputs.topk(k=len(args.labels), dim=1)
                 pred = indices[:, 0].squeeze(0)
-                #print(indices[torch.nonzero(vb_labels == args.labels.index('deaf'))])
-                #print(torch.cat([vb_ids[torch.nonzero(vb_labels == args.labels.index('deaf'))], vb_indices[torch.nonzero(vb_labels == args.labels.index('deaf'))]], dim=1))
                 
                 correct += pred.eq(vb_labels).sum().item()
     
@@ -91,7 +89,6 @@ def train_babychillanto(args, model, dataset, log, seed):
                 if len(mistake_indices) != 0:
                     out_types = [[args.labels[value] for value in row] for row in indices[mistake_indices].tolist()]
                     y_type = [args.labels[value] for value in vb_labels[mistake_indices].tolist()]
-                    #print(out_types, y_type)
 
                     wrong_ids = vb_ids[mistake_indices].tolist()
                     for id in wrong_ids:
@@ -111,13 +108,6 @@ def train_babychillanto(args, model, dataset, log, seed):
                 val_top1.update(val_acc1.item(), vb_audios.size(0))
                 val_top2.update(val_acc2.item(), vb_audios.size(0))
                 val_loss.update(loss.item(), 1)
-            
-            # for i, cls in enumerate(args.labels):
-            #     _inds = torch.nonzero(torch.eq(b_labels, i)).view(-1)
-            #     if len(_inds) > 0:
-            #         cls_acc1,cls_acc2 = accuracy(outputs[_inds], b_labels[_inds], topk=(1, 2))
-            #         cls_train_top1[i].update(cls_acc1.item(), b_audios.size(0))
-            #         cls_train_top2[i].update(cls_acc2.item(), b_audios.size(0))
                 
         for id, count in id2wrongCount.items():
             id2wrongCount[id] = count / dataset.val_data['id'].eq(id).sum().item() 
@@ -176,7 +166,7 @@ def train_babychillanto(args, model, dataset, log, seed):
             log.save_info(outputs, labels, ids, indices, 'test')
             loss = criterion(outputs, labels)
             _, predicted = torch.max(outputs, 1)
-            correct += (predicted == labels).sum().item()
+            print(predicted == labels)
             
             test_acc1,test_acc2 = accuracy(outputs, labels, topk=(1, 2))
             test_top1.update(test_acc1.item(), audios.size(0))

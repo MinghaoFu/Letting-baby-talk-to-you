@@ -1,0 +1,1 @@
+python main.py --seg_len 2 --loss 1*cross_entropy_loss+1*supervised_contrastive_loss --data Mix --seeds 2 --reweight --model resnet

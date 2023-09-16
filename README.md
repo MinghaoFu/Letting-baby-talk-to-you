@@ -3,7 +3,7 @@
 
 ## [Letting baby talk to you](https://github.com/MinghaoFu/Letting-baby-talk-to-you/)
 
-Authors
+Minghao Fu, Yu Yao, Haoyue Dai
 
 <p align="center">
     <img src="assets/images/logo.png" alt="logo" width="90%">

@@ -46,6 +46,7 @@ class Mix:
         self.n_mfcc_coeffs = args.n_mfcc_coeffs
         self.remove_ids = args.remove_ids
         self.seg_save_dir = args.seg_save_dir
+        self.center_data = args.center_data
         if self.seg_save_dir is not None:
             if os.path.exists(self.seg_save_dir):
                 raise ValueError('Directory of segmented audios exists!')
@@ -57,10 +58,10 @@ class Mix:
         
         self.id2audios, self.n_baby, self.baby_ids = self.get_dataset_ids()
         args.train_ids, args.val_ids, args.test_ids = self.generate_train_val_test_ids(self.baby_ids, self.n_baby, args.split_type, args.load_path, args.save_path)
+        print('--- Number of baby, train: {}, valid: {}, tets: {}'.format(len(args.train_ids), len(args.val_ids), len(args.test_ids)))
         if self.seg_len == 1:
             train_data, val_data = self.load_one_second_audio(args.train_ids, args.val_ids, args.n_mfcc_coeffs)
         elif self.seg_len == 0:
-            # 4 feature
             train_data, val_data = self.load_full_audio(args.train_ids, args.val_ids, args.n_mfcc_coeffs)
         else:
             train_data, val_data, test_data = self.load_n_seconds_audio_shift(self.seg_len, self.shift, args.train_ids, args.val_ids, args.test_ids, args.n_mfcc_coeffs)
@@ -108,7 +109,11 @@ class Mix:
                             n_baby += 1
                             class_ids.append(id)
 
-            baby_ids.append(class_ids)
+            if idx == 1:
+                n = len(class_ids) // 5
+                baby_ids.append(class_ids[:n])
+            else:
+                baby_ids.append(class_ids)
             
         print("--- Total baby number: {}, class baby num: {}".format(n_baby, [f"{self.labels[i]}: {len(cls)}" \
                 for i, cls in enumerate(baby_ids)]))
@@ -191,11 +196,12 @@ class Mix:
                             segment = y[start:end]
                         
                         mfcc = librosa.feature.mfcc(y=segment, sr=sr, n_mfcc=n_mfcc_coeffs).T
-
+                        
                         #n_frames = mfcc.shape[0]
                         pitch = librosa.yin(segment, fmin=75, fmax=600)
                         #intensity = librosa.feature.rms(y=y).flatten()
                         feature = np.concatenate((mfcc, np.expand_dims(pitch, axis=1)), axis=1)
+                        
                         if id in train_ids or id in self.remove_ids:
                             type = 'train'
                             train_data['audio'].append(feature)
@@ -223,7 +229,10 @@ class Mix:
                             sf.write(seg_save_path, segment, sr)
 
         for data in [train_data, val_data, test_data]:
-            data['audio'] = torch.from_numpy(center_data(np.stack(data['audio']))).float()
+            np_audios = np.stack(data['audio'])
+            if self.center_data:
+                np_audios = center_data(np_audios)
+            data['audio'] = torch.from_numpy(np_audios).float() 
             data['label'] = torch.tensor(data['label'])
             data['id'] = torch.tensor(data['id'])
             data['idx'] = torch.tensor(data['idx'])

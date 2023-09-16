@@ -35,6 +35,7 @@ if __name__ == '__main__':
     parser.add_argument('--seg_save_dir', type=str, default=None, help='Saving segmented audio files')
     parser.add_argument('--reweight', action='store_true', help='Reweighting')
     parser.add_argument('--add_labels', type=str, default='', help='Added labels')
+    parser.add_argument('--center_data', type=bool, default=False, help='Center data for training or not')
     
     parser.add_argument('--loss', type=str, default='1*cross_entropy_loss+1*supervised_contrastive_loss', help='Loss function combination')
     parser.add_argument('--temperature', type=float, default=0.07, help='Temperature for contrastive loss function')
