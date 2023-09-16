@@ -1,4 +1,4 @@
-./checkpoint/
-./Archive/
-./dataset/
+checkpoint/
+Archive/
+dataset/
 **/__pycache__/
