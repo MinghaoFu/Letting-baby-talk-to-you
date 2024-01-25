@@ -40,7 +40,11 @@ for seg_index in range(total_segs):
     feature_tensor = torch.from_numpy(feature).unsqueeze(0).float()
 
     model = resnet.resnet(args)
-    model.load_state_dict(torch.load(args.checkpoint_path))
+    if torch.cuda.is_available():
+        device = torch.device('cuda')
+    else:
+        device = torch.device('cpu')
+    model.load_state_dict(torch.load(args.checkpoint_path, map_location=device)) 
     model.eval()
     output = model(feature_tensor)
     probs = torch.nn.functional.softmax(output)

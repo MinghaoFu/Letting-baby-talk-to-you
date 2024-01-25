@@ -58,7 +58,7 @@ class Mix:
         
         self.id2audios, self.n_baby, self.baby_ids = self.get_dataset_ids()
         args.train_ids, args.val_ids, args.test_ids = self.generate_train_val_test_ids(self.baby_ids, self.n_baby, args.split_type, args.load_path, args.save_path)
-        print('--- Number of baby, train: {}, valid: {}, tets: {}'.format(len(args.train_ids), len(args.val_ids), len(args.test_ids)))
+        print('--- Number of baby, train: {}, valid: {}, tests: {}'.format(len(args.train_ids), len(args.val_ids), len(args.test_ids)))
         if self.seg_len == 1:
             train_data, val_data = self.load_one_second_audio(args.train_ids, args.val_ids, args.n_mfcc_coeffs)
         elif self.seg_len == 0:
@@ -109,9 +109,13 @@ class Mix:
                             n_baby += 1
                             class_ids.append(id)
 
-            if idx == 1:
-                n = len(class_ids) // 5
-                baby_ids.append(class_ids[:n])
+            if idx == 1: # for hungry dataset, we need more augmented data to improve its generalization
+                n = len(class_ids) // 3
+                new_class_ids = class_ids[:n]
+                for i in [0,4,6,7,9,10,17,20,21,22]:
+                    if i not in new_class_ids:
+                        new_class_ids.append(i)
+                baby_ids.append(new_class_ids)
             else:
                 baby_ids.append(class_ids)
             
