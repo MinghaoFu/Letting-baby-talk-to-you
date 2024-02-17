@@ -5,6 +5,8 @@ import torch
 import librosa
 import numpy as np
 import noisereduce as nr
+import glob
+import os
 
 from model import resnet
 from collections import Counter
@@ -107,11 +109,11 @@ def inference(audio_path, model, checkpoint_path, seg_len=2, n_classes=4, n_segm
     else:
         device = torch.device('cpu')
         
-    model.load_state_dict(torch.load(checkpoint_path, map_location=device)) 
+    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
+    model = model.to(device)
     model.eval()
     feature_tensors = []
     for start_time, end_time, seg in segs:
-
         mfcc = librosa.feature.mfcc(y=seg, sr=sr, n_mfcc=n_mfcc_coeffs).T
         pitch = librosa.yin(seg, fmin=75, fmax=600)
         feature = np.concatenate((mfcc, np.expand_dims(pitch, axis=1)), axis=1)
@@ -121,7 +123,9 @@ def inference(audio_path, model, checkpoint_path, seg_len=2, n_classes=4, n_segm
     batched_tensor = torch.cat(feature_tensors, dim=0)
     
     output = model(batched_tensor)
-    probs = torch.nn.functional.softmax(output)
+    print(f'Model Output: \n {output}')
+    probs = torch.nn.functional.softmax(output, dim=-1)
+    print(f'Probability: \n {probs}')
     predictions = torch.argmax(probs, dim=-1)
         
     predicted_label = most_frequent(predictions.cpu().numpy())
@@ -131,13 +135,15 @@ def inference(audio_path, model, checkpoint_path, seg_len=2, n_classes=4, n_segm
     
 if __name__ == "__main__":
     N_CLASSES = 4
-    AUDIO_PATH = './files/audio.wav'
-    CHECKPOINT_PATH = './files/resnet.pth'
+    AUDIO_PATH = './files/audio/'
+    CHECKPOINT_PATH = './files/checkpoint/resnet_1.pth'
     SEG_LEN = 2.0
     N_SEGMENTS = 3
     N_MFCC_COEFFS = 20
     
-    model = resnet(N_CLASSES)
-    predicted_label, score = inference(AUDIO_PATH, model, CHECKPOINT_PATH, seg_len=SEG_LEN, n_segments=N_SEGMENTS, n_mfcc_coeffs=N_MFCC_COEFFS)
-    print(predicted_label, score)
+    paths = glob.glob(os.path.join(AUDIO_PATH, '*.wav'))
     
+    for path in paths:
+        model = resnet(N_CLASSES)
+        predicted_label, score = inference(path, model, CHECKPOINT_PATH, seg_len=SEG_LEN, n_segments=N_SEGMENTS, n_mfcc_coeffs=N_MFCC_COEFFS)
+        print(f'Most Frequent Predicted Label: {predicted_label}, Useful Score {score}')
