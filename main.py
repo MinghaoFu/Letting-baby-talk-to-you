@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import os
-import torch.nn.functional as F
+from torch.nn import functional as F
 import numpy as np
 
 from loss import Loss

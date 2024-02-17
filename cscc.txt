@@ -1,0 +1,3 @@
+srun --nodes=3 --ntasks-per-node=1 --cpus-per-task 4 -q gpu-single --mem=16G -p gpu --pty bash -i
+python main.py --seg_len 2 --loss 1*cross_entropy_loss+1*supervised_contrastive_loss --data Mix --seeds 1+2+3+4+5 --reweight --model resnet
+python main.py --train --num 5000 --batch_size 5000 --pi 100 --lr 1e-4
